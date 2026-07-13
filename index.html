@@ -116,6 +116,20 @@
     border:1px solid var(--line); color:var(--gold-light); margin-left:6px; letter-spacing:.04em;
   }
   .empty-state{text-align:center; padding:60px 20px; color:var(--gold-light); opacity:.6; font-style:italic}
+  .tab-switch{display:flex; gap:8px; margin-bottom:14px}
+  .tab-btn{
+    flex:1; padding:10px; border-radius:10px; border:1px solid var(--line);
+    background:none; color:var(--gold-light); opacity:.65; font-size:.82rem;
+    cursor:pointer; font-family:inherit; letter-spacing:.02em;
+  }
+  .tab-btn.active{
+    opacity:1; background: rgba(201,168,92,0.1); border-color: var(--gold);
+    font-weight:700;
+  }
+  .courtyard-note{
+    font-size:.75rem; color:var(--gold-light); opacity:.75; font-style:italic;
+    text-align:center; margin-bottom:14px;
+  }
 
   /* ---- Room / slots ---- */
   .slogan{font-style:italic; font-size:.82rem; color:var(--gold-light); opacity:.8; text-align:center; margin-bottom:18px}
@@ -126,6 +140,7 @@
     font-size:.6rem; text-align:center; padding:4px; gap:2px; cursor:pointer;
   }
   .slot.filled{border-style:solid; background: rgba(201,168,92,0.08)}
+  .slot.mine{border-color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold); cursor:pointer}
   .slot .role{opacity:.7; font-size:.55rem; text-transform:uppercase; letter-spacing:.03em}
   .section-title{
     font-size:.7rem; text-transform:uppercase; letter-spacing:.08em;
@@ -185,6 +200,13 @@
 
   <!-- DISPUTE LIST -->
   <section id="screen-list" class="screen">
+    <div class="tab-switch">
+      <button class="tab-btn active" id="tabMine">My Disputes</button>
+      <button class="tab-btn" id="tabCourtyard">Courtyard</button>
+    </div>
+    <div class="courtyard-note" id="courtyardNote" style="display:none">
+      Anyone may enter here and choose a seat — a Party Representative slot, or a Sakshi's.
+    </div>
     <div id="disputeList"></div>
     <div class="empty-state" id="listEmpty">No Settlement Requests yet.<br/>Tap + to begin one, amicably.</div>
   </section>
@@ -202,6 +224,21 @@
         <option value="private">Private — only the 5 core participants</option>
         <option value="open">Open — Sakshi may witness</option>
       </select>
+
+      <div style="text-align:center; margin-top:18px;">
+        <span id="evaluatorGesture" style="font-size:1.4rem; cursor:pointer; opacity:.5; user-select:none;">🙏</span>
+      </div>
+
+      <div id="evaluatorCodeWrap" style="display:none">
+        <label>Evaluator's code</label>
+        <input type="text" id="newEvaluatorCode" inputmode="numeric" pattern="[0-9]*" maxlength="6"
+          placeholder="6 digits — tell only the Evaluator" />
+        <div style="font-size:.72rem; color:var(--gold-light); opacity:.7; margin-top:4px;">
+          Set a 6-digit code and share it with the Evaluator yourself, outside the app.
+          They'll enter it to take their seat.
+        </div>
+      </div>
+
       <div class="error-text" id="newError"></div>
       <button class="primary" id="newSubmit">Create Settlement Request</button>
       <button class="ghost" id="newCancel">Cancel</button>
@@ -261,7 +298,7 @@ const ROLE_LABELS = {
 };
 
 const ROLE_DESCRIPTIONS = {
-  evaluator: "Reviews both narratives and gives an impartial, non-binding assessment.",
+  evaluator: "Reviews both narratives and gives an impartial, non-binding assessment. Seated by entering the 6-digit code the Initiating Party shared with them, outside the app.",
   rep_a: "Guides the Initiating Party in presenting their narrative.",
   rep_b: "Guides the Responding Party in presenting their narrative.",
   party_a: "Brought the Settlement Request forward.",
@@ -349,7 +386,7 @@ document.getElementById("authSubmit").onclick = async () => {
       const cred = await auth.createUserWithEmailAndPassword(email, password);
       await cred.user.updateProfile({ displayName: name });
       await db.collection("sakshi_users").doc(cred.user.uid).set({
-        name, email, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        name, email, isEvaluator: false, createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
     }
   } catch(e){
@@ -366,50 +403,133 @@ auth.onAuthStateChanged(user => {
   document.getElementById("fabNew").style.display = user ? "flex" : "none";
   if(user){
     show("screen-list");
-    loadDisputes();
+    setListTab("mine");
   } else {
+    if (mineUnsub) mineUnsub();
+    if (courtyardUnsub) courtyardUnsub();
     show("screen-auth");
   }
 });
 
-// ---- Dispute list ----
-function loadDisputes(){
-  db.collection("sakshi_disputes")
-    .where("participantIds", "array-contains", currentUser.uid)
-    .orderBy("createdAt", "desc")
-    .onSnapshot(snap => {
-      const list = document.getElementById("disputeList");
-      const empty = document.getElementById("listEmpty");
-      list.innerHTML = "";
-      if(snap.empty){ empty.style.display = "block"; return; }
-      empty.style.display = "none";
-      snap.forEach(doc => {
-        const d = doc.data();
-        const card = document.createElement("div");
-        card.className = "dispute-card";
-        card.innerHTML = `<div class="title">${escapeHtml(d.title)}</div>
-          <div class="meta">${d.status || "open"} <span class="pill">${d.visibility === "open" ? "Open · Sakshi may witness" : "Private"}</span></div>`;
-        card.onclick = () => openRoom(doc.id);
-        list.appendChild(card);
-      });
-    }, err => console.error(err));
+// ---- Dispute list (two tabs: My Disputes / Courtyard) ----
+let mineUnsub = null;
+let courtyardUnsub = null;
+let listTab = "mine";
+
+document.getElementById("tabMine").onclick = () => setListTab("mine");
+document.getElementById("tabCourtyard").onclick = () => setListTab("courtyard");
+
+function setListTab(tab){
+  listTab = tab;
+  document.getElementById("tabMine").classList.toggle("active", tab === "mine");
+  document.getElementById("tabCourtyard").classList.toggle("active", tab === "courtyard");
+  document.getElementById("courtyardNote").style.display = tab === "courtyard" ? "block" : "none";
+
+  if(mineUnsub){ mineUnsub(); mineUnsub = null; }
+  if(courtyardUnsub){ courtyardUnsub(); courtyardUnsub = null; }
+
+  if(tab === "mine"){
+    mineUnsub = db.collection("sakshi_disputes")
+      .where("participantIds", "array-contains", currentUser.uid)
+      .orderBy("createdAt", "desc")
+      .onSnapshot(snap => renderDisputeList(snap, {
+        emptyText: "No Settlement Requests yet.<br/>Tap + to begin one, amicably.",
+        hideClosed: false
+      }), err => console.error(err));
+  } else {
+    // Courtyard: every Open dispute, so a newcomer can find a seat —
+    // whether or not they're a participant yet. Everybody reaches here.
+    // Resolved disputes vanish from the Courtyard once closed.
+    courtyardUnsub = db.collection("sakshi_disputes")
+      .where("visibility", "==", "open")
+      .orderBy("createdAt", "desc")
+      .onSnapshot(snap => renderDisputeList(snap, {
+        emptyText: "The courtyard is quiet.<br/>No Open Settlement Requests right now.",
+        hideClosed: true
+      }), err => console.error(err));
+  }
+}
+
+const CLOSED_STATUSES = ["settlement_agreement_ready", "unresolved_via_this_track"];
+
+function renderDisputeList(snap, opts){
+  const list = document.getElementById("disputeList");
+  const empty = document.getElementById("listEmpty");
+  list.innerHTML = "";
+
+  let docs = snap.docs;
+  if(opts.hideClosed){
+    docs = docs.filter(doc => !CLOSED_STATUSES.includes(doc.data().status));
+  }
+
+  if(docs.length === 0){
+    empty.innerHTML = opts.emptyText;
+    empty.style.display = "block";
+    return;
+  }
+  empty.style.display = "none";
+  docs.forEach(doc => {
+    const d = doc.data();
+    const isMine = (d.participantIds || []).includes(currentUser.uid);
+    const openSlots = (d.slots || []).filter(s => !s.uid).length;
+    const card = document.createElement("div");
+    card.className = "dispute-card";
+    card.innerHTML = `<div class="title">${escapeHtml(d.title)}</div>
+      <div class="meta">${d.status || "open"}
+        <span class="pill">${d.visibility === "open" ? "Open · Sakshi may witness" : "Private"}</span>
+        ${!isMine ? `<span class="pill">${openSlots} seat${openSlots===1?"":"s"} open</span>` : ""}
+      </div>`;
+    card.onclick = () => openRoom(doc.id);
+    list.appendChild(card);
+  });
 }
 
 // ---- New dispute ----
-document.getElementById("fabNew").onclick = () => show("screen-new");
+document.getElementById("fabNew").onclick = () => {
+  show("screen-new");
+  document.getElementById("evaluatorCodeWrap").style.display = "none";
+  document.getElementById("newEvaluatorCode").value = "";
+};
 document.getElementById("newCancel").onclick = () => show("screen-list");
+
+// Triple-tap 🙏 within 2 seconds reveals the Evaluator code field.
+let gestureTaps = [];
+document.getElementById("evaluatorGesture").onclick = () => {
+  const now = Date.now();
+  gestureTaps = gestureTaps.filter(t => now - t < 2000);
+  gestureTaps.push(now);
+  if(gestureTaps.length >= 3){
+    document.getElementById("evaluatorCodeWrap").style.display = "block";
+    document.getElementById("evaluatorGesture").style.opacity = "1";
+    gestureTaps = [];
+  }
+};
+
+// SHA-256 hash, hex-encoded — used so the plaintext code is never stored.
+async function sha256Hex(text){
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
 
 document.getElementById("newSubmit").onclick = async () => {
   const title = document.getElementById("newTitle").value.trim();
   const narrative = document.getElementById("newNarrative").value.trim();
   const visibility = document.getElementById("newVisibility").value;
+  const evaluatorCode = document.getElementById("newEvaluatorCode").value.trim();
   const errEl = document.getElementById("newError");
   if(!title || !narrative){
     errEl.textContent = "A title and your narrative are both needed to begin.";
     errEl.style.display = "block";
     return;
   }
+  if(!/^\d{6}$/.test(evaluatorCode)){
+    errEl.textContent = "Tap 🙏 three times to set a 6-digit Evaluator code before beginning.";
+    errEl.style.display = "block";
+    return;
+  }
   errEl.style.display = "none";
+
+  const evaluatorCodeHash = await sha256Hex(evaluatorCode);
 
   const slots = emptySlotLayout();
   const partyASlot = slots.find(s => s.id === "party_a");
@@ -425,12 +545,15 @@ document.getElementById("newSubmit").onclick = async () => {
     report: "",
     resolution: { acceptedA: false, acceptedB: false },
     slots,
+    evaluatorCodeHash,
     participantIds: [currentUser.uid],
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
   });
 
   document.getElementById("newTitle").value = "";
   document.getElementById("newNarrative").value = "";
+  document.getElementById("newEvaluatorCode").value = "";
+  document.getElementById("evaluatorCodeWrap").style.display = "none";
   openRoom(docRef.id);
 };
 
@@ -460,18 +583,21 @@ function renderRoom(d){
   grid.innerHTML = "";
   (d.slots || emptySlotLayout()).forEach(slot => {
     const el = document.createElement("div");
-    el.className = "slot" + (slot.uid ? " filled" : "");
+    const isMine = slot.uid === currentUser.uid;
+    el.className = "slot" + (slot.uid ? " filled" : "") + (isMine ? " mine" : "");
     el.title = ROLE_DESCRIPTIONS[slot.role] || "";
     el.innerHTML = `<div class="role">${ROLE_LABELS[slot.role]}</div><div>${slot.uid ? (slot.name || "—") : "empty"}</div>`;
     if(!slot.uid){
       el.onclick = () => claimSlot(slot.id);
+    } else if(isMine){
+      el.onclick = () => leaveSlot(slot.id);
     }
     grid.appendChild(el);
   });
 
   document.getElementById("roomNarrativeA").textContent = d.narrativeA || "—";
   document.getElementById("roomNarrativeB").textContent = d.narrativeB || "Awaiting response…";
-  document.getElementById("roomReport").textContent = d.report || "The Neutral Evaluator has not yet issued a Recommended Resolution.";
+  document.getElementById("roomReport").textContent = d.report || "The Evaluator has not yet issued a Recommended Resolution.";
 
   const acceptRow = document.getElementById("acceptRow");
   acceptRow.style.display = d.report ? "flex" : "none";
@@ -480,14 +606,68 @@ function renderRoom(d){
   downloadBtn.style.display = d.report ? "block" : "none";
 }
 
+const CONFIRM_QUESTIONS = {
+  rep_a: "Are you the Party Representative for the Initiating Party?",
+  rep_b: "Are you the Party Representative for the Responding Party?",
+  party_a: "Are you the Initiating Party in this dispute?",
+  party_b: "Are you the Responding Party in this dispute?",
+  sakshi: "Are you a Sakshi here? " + ROLE_DESCRIPTIONS.sakshi
+};
+
 async function claimSlot(slotId){
   const ref = db.collection("sakshi_disputes").doc(currentDisputeId);
   const doc = await ref.get();
   const d = doc.data();
+  const slot = (d.slots || []).find(s => s.id === slotId);
+  if(!slot) return;
+
+  if(slot.role === "evaluator"){
+    const code = window.prompt("Enter the 6-digit Evaluator code you were given, out of the app:");
+    if(code === null) return;
+    if(!/^\d{6}$/.test(code.trim())){
+      alert("That's not a 6-digit code.");
+      return;
+    }
+    const attemptHash = await sha256Hex(code.trim());
+    if(attemptHash !== d.evaluatorCodeHash){
+      alert("That code doesn't match. Ask whoever created this dispute for the correct one.");
+      return;
+    }
+    const slots = d.slots.map(s => s.id === slotId
+      ? { ...s, uid: currentUser.uid, name: currentUser.displayName || currentUser.email }
+      : s);
+    const participantIds = Array.from(new Set([...(d.participantIds||[]), currentUser.uid]));
+    await ref.update({ slots, participantIds });
+    return;
+  }
+
+  const question = CONFIRM_QUESTIONS[slot.role] || "Take this seat?";
+  const confirmed = window.confirm(question + "\n\nOnly confirm if this is genuinely your seat.");
+  if(!confirmed) return;
+
   const slots = d.slots.map(s => s.id === slotId
     ? { ...s, uid: currentUser.uid, name: currentUser.displayName || currentUser.email }
     : s);
   const participantIds = Array.from(new Set([...(d.participantIds||[]), currentUser.uid]));
+  await ref.update({ slots, participantIds });
+}
+
+async function leaveSlot(slotId){
+  const confirmed = window.confirm("Leave this seat? It will become empty and you can choose a different one.");
+  if(!confirmed) return;
+
+  const ref = db.collection("sakshi_disputes").doc(currentDisputeId);
+  const doc = await ref.get();
+  const d = doc.data();
+  const slots = d.slots.map(s => s.id === slotId
+    ? { ...s, uid: null, name: null }
+    : s);
+  // Only drop them from participantIds if they hold no other seat in this room.
+  const stillHoldsASeat = slots.some(s => s.uid === currentUser.uid);
+  const participantIds = stillHoldsASeat
+    ? d.participantIds
+    : (d.participantIds || []).filter(uid => uid !== currentUser.uid);
+
   await ref.update({ slots, participantIds });
 }
 
