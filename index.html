@@ -166,13 +166,19 @@
       <label>Email</label>
       <input type="email" id="authEmail" autocomplete="email" />
       <label>Password</label>
-      <input type="password" id="authPassword" autocomplete="current-password" />
+      <div style="position:relative">
+        <input type="password" id="authPassword" autocomplete="current-password" style="padding-right:44px" />
+        <button type="button" id="togglePassword" aria-label="Show password"
+          style="position:absolute; right:6px; top:50%; transform:translateY(-50%); background:none; border:none; font-size:1.1rem; cursor:pointer; padding:6px;">👁</button>
+      </div>
       <div id="authName-wrap" style="display:none">
         <label>Your name</label>
         <input type="text" id="authName" />
       </div>
       <div class="error-text" id="authError"></div>
+      <div class="error-text" id="authInfo" style="color: var(--ok); display:none"></div>
       <button class="primary" id="authSubmit">Sign In</button>
+      <div class="switch-link" id="forgotPassword">Forgot password?</div>
       <div class="switch-link" id="authSwitch">New here? Create an account</div>
     </div>
   </section>
@@ -289,12 +295,45 @@ function show(screenId){
 }
 
 // ---- Auth ----
+document.getElementById("togglePassword").onclick = () => {
+  const input = document.getElementById("authPassword");
+  const btn = document.getElementById("togglePassword");
+  const showing = input.type === "text";
+  input.type = showing ? "password" : "text";
+  btn.textContent = showing ? "👁" : "🙈";
+  btn.setAttribute("aria-label", showing ? "Show password" : "Hide password");
+};
+
+document.getElementById("forgotPassword").onclick = async () => {
+  const email = document.getElementById("authEmail").value.trim();
+  const errEl = document.getElementById("authError");
+  const infoEl = document.getElementById("authInfo");
+  errEl.style.display = "none";
+  infoEl.style.display = "none";
+  if (!email) {
+    errEl.textContent = "Enter your email above first, then tap \"Forgot password?\".";
+    errEl.style.display = "block";
+    return;
+  }
+  try {
+    await auth.sendPasswordResetEmail(email);
+    infoEl.textContent = "A password reset link has been sent to " + email + ".";
+    infoEl.style.display = "block";
+  } catch (e) {
+    errEl.textContent = e.message;
+    errEl.style.display = "block";
+  }
+};
+
 document.getElementById("authSwitch").onclick = () => {
+  document.getElementById("authError").style.display = "none";
+  document.getElementById("authInfo").style.display = "none";
   authMode = authMode === "signin" ? "signup" : "signin";
   document.getElementById("authTitle").textContent = authMode === "signin" ? "Sign in" : "Create account";
   document.getElementById("authSubmit").textContent = authMode === "signin" ? "Sign In" : "Create Account";
   document.getElementById("authSwitch").textContent = authMode === "signin" ? "New here? Create an account" : "Already have an account? Sign in";
   document.getElementById("authName-wrap").style.display = authMode === "signup" ? "block" : "none";
+  document.getElementById("forgotPassword").style.display = authMode === "signup" ? "none" : "block";
 };
 
 document.getElementById("authSubmit").onclick = async () => {
