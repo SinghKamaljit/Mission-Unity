@@ -187,17 +187,12 @@
     background:#fff;border:1px solid var(--line);border-radius:8px;
     padding:9px 11px;margin-top:6px;font-size:13px;color:var(--text-muted);
   }
-
-  @media print{
-    body *{visibility:hidden;}
-    #printArea,#printArea *{visibility:visible;}
-    #printArea{position:absolute;top:0;left:0;width:100%;padding:20px;}
-  }
 </style>
 </head>
 <body>
 
 <div class="screen">
+
   <div class="brand">
     <div>
       <h1 class="brand-name">Mission Unity</h1>
@@ -244,13 +239,8 @@
   </div>
 </div>
 
-<!-- Hidden printable resolution view -->
-<div id="printArea" style="display:none;">
-  <h2 id="printTitle"></h2>
-  <div id="printBody"></div>
-</div>
-
 <!-- ADMIN SHEET -->
+
 <div class="overlay" id="adminOverlay" style="display:none;">
   <div class="sheet">
     <h3>Admin</h3>
@@ -468,25 +458,43 @@ document.getElementById('resolveBtn').addEventListener('click', async ()=>{
 });
 
 document.getElementById('exportBtn').addEventListener('click', async ()=>{
+  // Open the window synchronously, inside the click gesture, so mobile
+  // popup blockers don't silently kill it once we start awaiting Firestore.
+  const printWin = window.open('', '_blank');
+  if(!printWin){
+    alert('Your browser blocked the export window. Please allow pop-ups for this site and try again.');
+    return;
+  }
+  printWin.document.write('<p style="font-family:sans-serif;padding:24px;color:#666;">Preparing record…</p>');
+
   const ref = db.collection('sakshi_rooms').doc(currentRoomId);
   const msgs = await ref.collection('messages').orderBy('ts','asc').get();
-  const printTitle = document.getElementById('printTitle');
-  const printBody = document.getElementById('printBody');
-  printTitle.textContent = document.getElementById('roomTitleText').textContent + ' — Record';
-  printBody.innerHTML = '';
+  const title = document.getElementById('roomTitleText').textContent + ' — Record';
+
+  const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  let rows = '';
   msgs.forEach(d=>{
     const m = d.data();
-    const p = document.createElement('p');
     const label = SEATS.find(s=>s.id===m.seat)?.code || m.seat;
-    p.textContent = (m.resolution ? 'RESOLUTION — ' : '') + label + ': ' + m.text;
-    printBody.appendChild(p);
+    const prefix = m.resolution ? 'RESOLUTION — ' : '';
+    rows += `<p class="${m.resolution ? 'resolution' : ''}"><strong>${esc(prefix + label)}:</strong> ${esc(m.text)}</p>`;
   });
-  document.getElementById('printArea').style.display = 'block';
-  window.print();
-});
+  if(!rows){ rows = '<p>No matter recorded.</p>'; }
 
-window.addEventListener('afterprint', ()=>{
-  document.getElementById('printArea').style.display = 'none';
+  printWin.document.open();
+  printWin.document.write(`<!DOCTYPE html><html><head><title>${esc(title)}</title>
+    <meta charset="UTF-8">
+    <style>
+      body{font-family:Georgia,serif;padding:28px;color:#20264A;max-width:640px;margin:0 auto;}
+      h2{font-family:Georgia,serif;border-bottom:2px solid #B08D57;padding-bottom:10px;}
+      p{line-height:1.6;font-size:14px;margin:10px 0;}
+      p.resolution{background:#FBF1DF;border-left:3px solid #B08D57;padding:10px 12px;}
+    </style>
+    </head><body><h2>${esc(title)}</h2>${rows}</body></html>`);
+  printWin.document.close();
+  printWin.focus();
+  // give the new document a moment to lay out before invoking print
+  setTimeout(()=>{ printWin.print(); }, 350);
 });
 
 document.getElementById('leaveRoomBtn').addEventListener('click', async ()=>{
