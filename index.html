@@ -481,7 +481,12 @@ document.getElementById('exportBtn').addEventListener('click', async ()=>{
     p.textContent = (m.resolution ? 'RESOLUTION — ' : '') + label + ': ' + m.text;
     printBody.appendChild(p);
   });
+  document.getElementById('printArea').style.display = 'block';
   window.print();
+});
+
+window.addEventListener('afterprint', ()=>{
+  document.getElementById('printArea').style.display = 'none';
 });
 
 document.getElementById('leaveRoomBtn').addEventListener('click', async ()=>{
