@@ -1,816 +1,551 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-<meta name="theme-color" content="#0B1B3A" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="apple-mobile-web-app-title" content="Mission Unity" />
-<meta name="description" content="From duality to oneness. Duality breeds dispute; let unity be attained amicably." />
-<link rel="manifest" href="manifest.json" />
-<link rel="icon" href="icons/icon-192.png" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Mission Unity</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#20264A">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --navy: #0B1B3A;
-    --navy-deep: #071228;
-    --navy-mid: #16295A;
-    --gold: #C9A85C;
-    --gold-light: #E0C68C;
-    --ivory: #F4F1EA;
-    --line: rgba(201,168,92,0.22);
-    --danger: #B5541A;
-    --ok: #5C8A5A;
-    --radius: 14px;
+    --ink:#20264A;
+    --ink-soft:#3B4272;
+    --paper:#EDE7D9;
+    --paper-raised:#F6F2E8;
+    --brass:#B08D57;
+    --brass-bright:#C9A24B;
+    --line:#D8CFB8;
+    --text:#20264A;
+    --text-muted:#6B6F8F;
+    --ok:#4C7A5B;
+    --danger:#A3432F;
   }
-  *{box-sizing:border-box}
-  html,body{height:100%}
+  *{box-sizing:border-box;}
   body{
     margin:0;
-    background: radial-gradient(1200px 800px at 50% -10%, var(--navy-mid), var(--navy) 55%, var(--navy-deep));
-    color: var(--ivory);
-    font-family: "Georgia", "Noto Serif", serif;
+    background:var(--paper);
+    color:var(--text);
+    font-family:'Inter',system-ui,sans-serif;
     min-height:100vh;
+  }
+  h1,h2,h3,.display{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    letter-spacing:-0.01em;
+  }
+  .screen{max-width:520px;margin:0 auto;padding:20px 18px 40px;}
+
+  /* Header */
+  .brand{
+    display:flex;align-items:baseline;justify-content:space-between;
+    padding:18px 4px 22px;user-select:none;
+  }
+  .brand-mark{font-size:22px;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+  .brand-name{font-size:19px;margin:0;color:var(--ink);}
+  .brand-tag{font-size:11px;color:var(--text-muted);letter-spacing:.04em;display:block;margin-top:2px;}
+
+  /* Entry */
+  .card{
+    background:var(--paper-raised);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:22px;
+  }
+  .field-label{font-size:12px;color:var(--text-muted);letter-spacing:.04em;text-transform:uppercase;margin-bottom:8px;display:block;}
+  input[type=text],input[type=number]{
+    width:100%;
+    font-family:'Fraunces',serif;
+    font-size:22px;
+    padding:12px 14px;
+    border:1px solid var(--line);
+    border-radius:8px;
+    background:#fff;
+    color:var(--ink);
+  }
+  input:focus{outline:2px solid var(--brass);outline-offset:1px;}
+  button{
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:14px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    padding:13px 18px;
+  }
+  .btn-primary{background:var(--ink);color:#fff;width:100%;margin-top:14px;}
+  .btn-primary:disabled{opacity:.4;cursor:default;}
+  .btn-ghost{background:transparent;color:var(--ink-soft);border:1px solid var(--line);}
+  .btn-danger{background:var(--danger);color:#fff;}
+  .hint{font-size:12.5px;color:var(--text-muted);margin-top:16px;line-height:1.5;}
+
+  /* Room header */
+  .room-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .room-title{font-size:20px;margin:0;}
+  .room-sub{font-size:12px;color:var(--text-muted);}
+  .status-pill{
+    font-size:11px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;
+    padding:4px 9px;border-radius:20px;
+  }
+  .status-active{background:#DCE7DE;color:var(--ok);}
+  .status-resolved{background:#EFE0D2;color:var(--brass);}
+
+  /* Seats grid */
+  .seat-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:9px;
+    margin-bottom:18px;
+  }
+  .seat{
+    border:1px solid var(--line);
+    background:var(--paper-raised);
+    border-radius:9px;
+    padding:12px 6px;
+    text-align:center;
+    cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .seat-code{font-family:'Fraunces',serif;font-size:17px;display:block;}
+  .seat-state{font-size:10px;color:var(--text-muted);display:block;margin-top:3px;letter-spacing:.03em;text-transform:uppercase;}
+  .seat.mine{border-color:var(--ink);background:var(--ink);}
+  .seat.mine .seat-code,.seat.mine .seat-state{color:#fff;}
+  .seat.taken:not(.mine){opacity:.5;cursor:default;}
+  .seat.silent{border-style:dashed;}
+
+  /* Thread */
+  .thread-wrap{
+    background:var(--paper-raised);
+    border:1px solid var(--line);
+    border-radius:10px;
+    overflow:hidden;
+  }
+  .thread{
+    max-height:52vh;
+    overflow-y:auto;
+    padding:14px;
     display:flex;
     flex-direction:column;
+    gap:10px;
   }
-  .brand-mark{
-    width:34px;height:34px;border-radius:9px;
-    background: var(--navy-deep);
+  .msg{max-width:88%;}
+  .msg-meta{font-size:11px;color:var(--text-muted);margin-bottom:2px;}
+  .msg-body{
+    background:#fff;
     border:1px solid var(--line);
-    display:flex;align-items:center;justify-content:center;
-    flex-shrink:0;
+    border-radius:8px;
+    padding:9px 12px;
+    font-size:14.5px;
+    line-height:1.45;
+    white-space:pre-wrap;
   }
-  .brand-mark svg{width:20px;height:20px}
-  header{
-    display:flex;align-items:center;gap:10px;
-    padding: 16px 18px;
-    border-bottom: 1px solid var(--line);
-  }
-  header h1{
-    font-size:1.05rem; margin:0; letter-spacing:.02em; font-weight:600;
-    font-family: "Noto Serif", serif;
-  }
-  header .tagline{
-    font-size:.68rem; color: var(--gold-light); opacity:.75;
-    font-style: italic; margin-top:1px;
-  }
-  header .spacer{flex:1}
-  header button.icon-btn{
-    background:none;border:1px solid var(--line);color:var(--gold-light);
-    border-radius:10px;padding:6px 10px;font-size:.85rem;cursor:pointer;
-  }
-  main{flex:1; padding: 18px; max-width:520px; margin:0 auto; width:100%;}
-  .screen{display:none}
-  .screen.active{display:block}
+  .msg.self .msg-body{background:#E4E9F5;border-color:#C7D0EA;}
+  .msg.resolution .msg-body{background:#FBF1DF;border-color:var(--brass);}
+  .msg.resolution .msg-meta{color:var(--brass);font-weight:600;}
+  .empty-thread{color:var(--text-muted);font-size:13.5px;text-align:center;padding:30px 10px;}
 
-  /* ---- Auth ---- */
-  .card{
-    background: rgba(255,255,255,0.03);
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    padding: 22px;
+  .composer{
+    display:flex;gap:8px;padding:10px;border-top:1px solid var(--line);
   }
-  label{display:block; font-size:.72rem; text-transform:uppercase; letter-spacing:.08em; color:var(--gold-light); margin:14px 0 6px;}
-  input, textarea{
-    width:100%; padding:11px 12px; border-radius:10px;
-    border:1px solid var(--line); background: var(--navy-deep); color: var(--ivory);
-    font-family: inherit; font-size:.95rem;
+  .composer textarea{
+    flex:1;resize:none;border:1px solid var(--line);border-radius:8px;
+    padding:9px 11px;font-family:'Inter',sans-serif;font-size:14.5px;
+    min-height:38px;max-height:100px;
   }
-  textarea{resize:vertical; min-height:90px}
-  button.primary{
-    width:100%; margin-top:18px; padding:13px; border-radius:10px; border:none;
-    background: linear-gradient(180deg, var(--gold-light), var(--gold));
-    color: var(--navy-deep); font-weight:700; font-size:.95rem; cursor:pointer;
-    letter-spacing:.02em;
-  }
-  button.ghost{
-    width:100%; margin-top:10px; padding:11px; border-radius:10px;
-    background:none; border:1px solid var(--line); color:var(--gold-light);
-    font-size:.85rem; cursor:pointer;
-  }
-  .switch-link{
-    text-align:center; margin-top:16px; font-size:.82rem; color:var(--gold-light);
-    opacity:.8; cursor:pointer; text-decoration:underline; text-underline-offset:3px;
-  }
-  .error-text{color:var(--danger); font-size:.8rem; margin-top:10px; display:none;}
+  .composer button{padding:0 16px;background:var(--ink);color:#fff;}
+  .watch-only{padding:12px;text-align:center;font-size:12.5px;color:var(--text-muted);border-top:1px solid var(--line);}
 
-  /* ---- Dispute list ---- */
-  .fab{
-    position:fixed; right:20px; bottom:24px;
-    width:56px;height:56px;border-radius:50%;
-    background: linear-gradient(180deg, var(--gold-light), var(--gold));
-    color:var(--navy-deep); border:none; font-size:1.6rem; cursor:pointer;
-    box-shadow: 0 8px 22px rgba(0,0,0,.4);
+  .toolbar{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
+  .toolbar button{flex:1;}
+
+  /* Admin overlay */
+  .overlay{
+    position:fixed;inset:0;background:rgba(32,38,74,.72);
+    display:flex;align-items:flex-end;justify-content:center;z-index:50;
   }
-  .dispute-card{
-    border:1px solid var(--line); border-radius: var(--radius);
-    padding:14px 16px; margin-bottom:12px; cursor:pointer;
-    background: rgba(255,255,255,0.02);
+  .sheet{
+    background:var(--paper-raised);
+    width:100%;max-width:520px;
+    border-radius:16px 16px 0 0;
+    padding:20px;
   }
-  .dispute-card .title{font-weight:700; font-size:.98rem}
-  .dispute-card .meta{font-size:.72rem; color:var(--gold-light); opacity:.75; margin-top:4px}
-  .pill{
-    display:inline-block; font-size:.65rem; padding:2px 8px; border-radius:20px;
-    border:1px solid var(--line); color:var(--gold-light); margin-left:6px; letter-spacing:.04em;
+  .sheet h3{margin:0 0 14px;font-size:17px;}
+  .confirm-box{
+    border:1px solid var(--danger);
+    background:#FBE9E4;
+    border-radius:8px;
+    padding:12px;
+    font-size:13.5px;
+    margin-top:12px;
+    line-height:1.5;
   }
-  .empty-state{text-align:center; padding:60px 20px; color:var(--gold-light); opacity:.6; font-style:italic}
-  .tab-switch{display:flex; gap:8px; margin-bottom:14px}
-  .tab-btn{
-    flex:1; padding:10px; border-radius:10px; border:1px solid var(--line);
-    background:none; color:var(--gold-light); opacity:.65; font-size:.82rem;
-    cursor:pointer; font-family:inherit; letter-spacing:.02em;
-  }
-  .tab-btn.active{
-    opacity:1; background: rgba(201,168,92,0.1); border-color: var(--gold);
-    font-weight:700;
-  }
-  .courtyard-note{
-    font-size:.75rem; color:var(--gold-light); opacity:.75; font-style:italic;
-    text-align:center; margin-bottom:14px;
+  .row{display:flex;gap:8px;margin-top:10px;}
+  .row button{flex:1;}
+  .link-line{
+    display:flex;gap:8px;align-items:center;
+    background:#fff;border:1px solid var(--line);border-radius:8px;
+    padding:9px 11px;margin-top:6px;font-size:13px;color:var(--text-muted);
   }
 
-  /* ---- Room / slots ---- */
-  .slogan{font-style:italic; font-size:.82rem; color:var(--gold-light); opacity:.8; text-align:center; margin-bottom:18px}
-  .slot-grid{display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-bottom:20px}
-  .slot{
-    aspect-ratio:1; border-radius:10px; border:1px dashed var(--line);
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    font-size:.6rem; text-align:center; padding:4px; gap:2px; cursor:pointer;
+  @media print{
+    body *{visibility:hidden;}
+    #printArea,#printArea *{visibility:visible;}
+    #printArea{position:absolute;top:0;left:0;width:100%;padding:20px;}
   }
-  .slot.filled{border-style:solid; background: rgba(201,168,92,0.08)}
-  .slot.mine{border-color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold); cursor:pointer}
-  .slot .role{opacity:.7; font-size:.55rem; text-transform:uppercase; letter-spacing:.03em}
-  .section-title{
-    font-size:.7rem; text-transform:uppercase; letter-spacing:.08em;
-    color:var(--gold-light); margin: 18px 0 8px; opacity:.85;
-  }
-  .narrative-box{white-space:pre-wrap; font-size:.9rem; line-height:1.5; color:var(--ivory); opacity:.92}
-  .report-box{
-    border:1px solid var(--line); border-radius:var(--radius); padding:16px;
-    background: rgba(201,168,92,0.06); margin-top:8px;
-  }
-  .btn-row{display:flex; gap:10px; margin-top:14px}
-  .btn-row button{flex:1}
-  button.accept{background: var(--ok); color:var(--ivory); border:none; border-radius:10px; padding:12px; font-weight:700; cursor:pointer}
-  button.decline{background:none; border:1px solid var(--line); color:var(--ivory); border-radius:10px; padding:12px; cursor:pointer}
-  .contribution-note{font-size:.75rem; opacity:.7; text-align:center; margin-top:14px; font-style:italic}
 </style>
 </head>
 <body>
 
-<header>
-  <div class="brand-mark">
-    <svg viewBox="0 0 24 24" fill="none"><circle cx="9.6" cy="12" r="5.3" stroke="#E0C68C" stroke-width="1.3"/><circle cx="14.4" cy="12" r="5.3" stroke="#E0C68C" stroke-width="1.3"/><path d="M12 7.2 C13.7 8.7 13.7 15.3 12 16.8 C10.3 15.3 10.3 8.7 12 7.2 Z" fill="#C9A85C"/></svg>
+<div class="screen">
+  <div class="brand">
+    <div>
+      <h1 class="brand-name">Mission Unity</h1>
+      <span class="brand-tag">From duality to oneness</span>
+    </div>
+    <div class="brand-mark" id="brandMark">🙏</div>
   </div>
-  <div>
-    <h1>Mission Unity</h1>
-    <div class="tagline">From duality to oneness</div>
+
+  <!-- ENTRY VIEW -->
+  <div id="entryView" class="card">
+    <span class="field-label">Room number</span>
+    <input type="number" id="roomInput" placeholder="e.g. 1" inputmode="numeric">
+    <button class="btn-primary" id="enterRoomBtn">Enter room</button>
+    <p class="hint">Sit at the seat you were told to. Rooms not part of anything until someone sits.</p>
   </div>
-  <div class="spacer"></div>
-  <button class="icon-btn" id="signOutBtn" style="display:none">Sign out</button>
-</header>
 
-<main>
-
-  <!-- AUTH -->
-  <section id="screen-auth" class="screen active">
-    <div class="card">
-      <div id="authTitle" style="font-size:1.1rem; font-weight:700;">Sign in</div>
-      <label>Email</label>
-      <input type="email" id="authEmail" autocomplete="email" />
-      <label>Password</label>
-      <div style="position:relative">
-        <input type="password" id="authPassword" autocomplete="current-password" style="padding-right:44px" />
-        <button type="button" id="togglePassword" aria-label="Show password"
-          style="position:absolute; right:6px; top:50%; transform:translateY(-50%); background:none; border:none; font-size:1.1rem; cursor:pointer; padding:6px;">👁</button>
+  <!-- ROOM VIEW -->
+  <div id="roomView" style="display:none;">
+    <div class="room-head">
+      <div>
+        <h2 class="room-title" id="roomTitleText">Room —</h2>
+        <span class="room-sub" id="roomSub">loading…</span>
       </div>
-      <div id="authName-wrap" style="display:none">
-        <label>Your name</label>
-        <input type="text" id="authName" />
+      <span class="status-pill status-active" id="statusPill">Active</span>
+    </div>
+
+    <div class="seat-grid" id="seatGrid"></div>
+
+    <div class="thread-wrap">
+      <div class="thread" id="thread"><div class="empty-thread">No matter yet.</div></div>
+      <div class="composer" id="composer" style="display:none;">
+        <textarea id="msgInput" placeholder="Speak here…"></textarea>
+        <button id="sendBtn">Send</button>
       </div>
-      <div class="error-text" id="authError"></div>
-      <div class="error-text" id="authInfo" style="color: var(--ok); display:none"></div>
-      <button class="primary" id="authSubmit">Sign In</button>
-      <div class="switch-link" id="forgotPassword">Forgot password?</div>
-      <div class="switch-link" id="authSwitch">New here? Create an account</div>
-    </div>
-  </section>
-
-  <!-- DISPUTE LIST -->
-  <section id="screen-list" class="screen">
-    <div class="tab-switch">
-      <button class="tab-btn active" id="tabMine">My Disputes</button>
-      <button class="tab-btn" id="tabCourtyard">Courtyard</button>
-    </div>
-    <div class="courtyard-note" id="courtyardNote" style="display:none">
-      Anyone may enter here and choose a seat — a Party Representative slot, or a Sakshi's.
-    </div>
-    <div id="disputeList"></div>
-    <div class="empty-state" id="listEmpty">No Settlement Requests yet.<br/>Tap + to begin one, amicably.</div>
-  </section>
-
-  <!-- NEW DISPUTE -->
-  <section id="screen-new" class="screen">
-    <div class="card">
-      <div style="font-size:1.05rem; font-weight:700; margin-bottom:4px;">New Settlement Request</div>
-      <label>Title</label>
-      <input type="text" id="newTitle" placeholder="A short, neutral summary" />
-      <label>Your narrative</label>
-      <textarea id="newNarrative" placeholder="Describe the matter as the Initiating Party. Keep it factual."></textarea>
-      <label>Visibility</label>
-      <select id="newVisibility" style="width:100%; padding:11px; border-radius:10px; border:1px solid var(--line); background:var(--navy-deep); color:var(--ivory);">
-        <option value="private">Private — only the 5 core participants</option>
-        <option value="open">Open — Sakshi may witness</option>
-      </select>
-
-      <div style="text-align:center; margin-top:18px;">
-        <span id="evaluatorGesture" style="font-size:1.4rem; cursor:pointer; opacity:.5; user-select:none;">🙏</span>
-      </div>
-
-      <div id="evaluatorCodeWrap" style="display:none">
-        <label>Evaluator's code</label>
-        <input type="text" id="newEvaluatorCode" inputmode="numeric" pattern="[0-9]*" maxlength="6"
-          placeholder="6 digits — tell only the Evaluator" />
-        <div style="font-size:.72rem; color:var(--gold-light); opacity:.7; margin-top:4px;">
-          Set a 6-digit code and share it with the Evaluator yourself, outside the app.
-          They'll enter it to take their seat.
-        </div>
-      </div>
-
-      <div class="error-text" id="newError"></div>
-      <button class="primary" id="newSubmit">Create Settlement Request</button>
-      <button class="ghost" id="newCancel">Cancel</button>
-    </div>
-  </section>
-
-  <!-- ROOM -->
-  <section id="screen-room" class="screen">
-    <div class="slogan">Duality breeds dispute. Let unity be attained amicably.</div>
-    <div class="slot-grid" id="slotGrid"></div>
-    <div style="font-size:.68rem; color:var(--gold-light); opacity:.65; line-height:1.6; margin-bottom:18px;">
-      <strong>Evaluator</strong> — impartial, non-binding assessment only.
-      <strong>Sakshi</strong> — silent witness; never comments or intervenes.
+      <div class="watch-only" id="watchOnly" style="display:none;">You are seated as a silent witness.</div>
     </div>
 
-    <div class="section-title">Initiating Party's Narrative</div>
-    <div class="narrative-box" id="roomNarrativeA">—</div>
-
-    <div class="section-title">Responding Party's Narrative</div>
-    <div class="narrative-box" id="roomNarrativeB">Awaiting response…</div>
-
-    <div class="section-title">Evaluation Report</div>
-    <div class="report-box" id="roomReport">The Neutral Evaluator has not yet issued a Recommended Resolution.</div>
-    <button class="ghost" id="downloadReportBtn" style="display:none">⬇ Download Report (PDF)</button>
-
-    <div class="btn-row" id="acceptRow" style="display:none">
-      <button class="accept" id="acceptBtn">Accept Recommendation</button>
-      <button class="decline" id="declineBtn">Decline</button>
+    <div class="toolbar" id="evaluatorTools" style="display:none;">
+      <button class="btn-ghost" id="resolveBtn">Post resolution</button>
+      <button class="btn-ghost" id="exportBtn" style="display:none;">Export PDF</button>
     </div>
-    <div class="contribution-note">Contributions are entirely voluntary, given after resolution, as you wish.</div>
 
-    <button class="ghost" id="roomBack" style="margin-top:20px">← Back to Settlement Requests</button>
-  </section>
+    <button class="btn-ghost" style="width:100%;margin-top:14px;" id="leaveRoomBtn">Leave room</button>
+  </div>
+</div>
 
-</main>
+<!-- Hidden printable resolution view -->
+<div id="printArea" style="display:none;">
+  <h2 id="printTitle"></h2>
+  <div id="printBody"></div>
+</div>
 
-<button class="fab" id="fabNew" style="display:none">+</button>
+<!-- ADMIN SHEET -->
+<div class="overlay" id="adminOverlay" style="display:none;">
+  <div class="sheet">
+    <h3>Admin</h3>
+    <span class="field-label">Room to manage</span>
+    <input type="number" id="adminRoomInput" placeholder="Room number" inputmode="numeric">
+    <div class="link-line" id="adminRoomStatus">—</div>
+    <div class="row">
+      <button class="btn-danger" id="adminClearBtn">Clear room</button>
+      <button class="btn-ghost" id="adminCloseBtn">Close</button>
+    </div>
+    <div class="confirm-box" id="adminConfirmBox" style="display:none;"></div>
+  </div>
+</div>
 
-<!-- Firebase (compat build, same as Chithi's likely setup) -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="firebase-config.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
-firebase.initializeApp(firebaseConfig);
+/* ---------- Seat model: one generic seat, two permission tiers ---------- */
+const SEATS = [
+  {id:'evaluator', code:'EVAL', canPost:true},
+  {id:'p1', code:'P1', canPost:true},
+  {id:'p2', code:'P2', canPost:true},
+  {id:'a1', code:'A1', canPost:true},
+  {id:'a2', code:'A2', canPost:true},
+  {id:'s1', code:'S1', canPost:false},
+  {id:'s2', code:'S2', canPost:false},
+  {id:'s3', code:'S3', canPost:false},
+  {id:'s4', code:'S4', canPost:false},
+  {id:'s5', code:'S5', canPost:false},
+];
+
+firebase.initializeApp(FIREBASE_CONFIG);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-const ROLE_LABELS = {
-  evaluator: "Evaluator",
-  rep_a: "Party Rep · A",
-  rep_b: "Party Rep · B",
-  party_a: "Initiating Party",
-  party_b: "Responding Party",
-  sakshi: "Sakshi"
-};
+let uid = null;
+let currentRoomId = null;
+let currentSeatId = null;
+let unsubRoom = null;
+let unsubMsgs = null;
 
-const ROLE_DESCRIPTIONS = {
-  evaluator: "Reviews both narratives and gives an impartial, non-binding assessment. Seated by entering the 6-digit code the Initiating Party shared with them, outside the app.",
-  rep_a: "Guides the Initiating Party in presenting their narrative.",
-  rep_b: "Guides the Responding Party in presenting their narrative.",
-  party_a: "Brought the Settlement Request forward.",
-  party_b: "Was invited to respond.",
-  sakshi: "Witnesses in silence — does not comment, vote, or contact either party."
-};
+auth.onAuthStateChanged(user=>{
+  if(user){ uid = user.uid; }
+});
+auth.signInAnonymously().catch(e=>console.error('auth error', e));
 
-// 10 fixed slots per room: 1 evaluator, 2 reps, 2 parties, 5 sakshi
-function emptySlotLayout(){
-  return [
-    { id:"evaluator", role:"evaluator" },
-    { id:"rep_a", role:"rep_a" },
-    { id:"rep_b", role:"rep_b" },
-    { id:"party_a", role:"party_a" },
-    { id:"party_b", role:"party_b" },
-    { id:"sakshi_1", role:"sakshi" },
-    { id:"sakshi_2", role:"sakshi" },
-    { id:"sakshi_3", role:"sakshi" },
-    { id:"sakshi_4", role:"sakshi" },
-    { id:"sakshi_5", role:"sakshi" }
-  ];
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(e=>console.error('sw error', e));
+  });
 }
 
-let currentUser = null;
-let currentDisputeId = null;
-let authMode = "signin";
+/* ---------- Entry ---------- */
+const entryView = document.getElementById('entryView');
+const roomView = document.getElementById('roomView');
+const roomInput = document.getElementById('roomInput');
 
-function show(screenId){
-  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-  document.getElementById(screenId).classList.add("active");
-}
-
-// ---- Auth ----
-document.getElementById("togglePassword").onclick = () => {
-  const input = document.getElementById("authPassword");
-  const btn = document.getElementById("togglePassword");
-  const showing = input.type === "text";
-  input.type = showing ? "password" : "text";
-  btn.textContent = showing ? "👁" : "🙈";
-  btn.setAttribute("aria-label", showing ? "Show password" : "Hide password");
-};
-
-document.getElementById("forgotPassword").onclick = async () => {
-  const email = document.getElementById("authEmail").value.trim();
-  const errEl = document.getElementById("authError");
-  const infoEl = document.getElementById("authInfo");
-  errEl.style.display = "none";
-  infoEl.style.display = "none";
-  if (!email) {
-    errEl.textContent = "Enter your email above first, then tap \"Forgot password?\".";
-    errEl.style.display = "block";
-    return;
-  }
-  try {
-    await auth.sendPasswordResetEmail(email);
-    infoEl.textContent = "A password reset link has been sent to " + email + ".";
-    infoEl.style.display = "block";
-  } catch (e) {
-    errEl.textContent = e.message;
-    errEl.style.display = "block";
-  }
-};
-
-document.getElementById("authSwitch").onclick = () => {
-  document.getElementById("authError").style.display = "none";
-  document.getElementById("authInfo").style.display = "none";
-  authMode = authMode === "signin" ? "signup" : "signin";
-  document.getElementById("authTitle").textContent = authMode === "signin" ? "Sign in" : "Create account";
-  document.getElementById("authSubmit").textContent = authMode === "signin" ? "Sign In" : "Create Account";
-  document.getElementById("authSwitch").textContent = authMode === "signin" ? "New here? Create an account" : "Already have an account? Sign in";
-  document.getElementById("authName-wrap").style.display = authMode === "signup" ? "block" : "none";
-  document.getElementById("forgotPassword").style.display = authMode === "signup" ? "none" : "block";
-};
-
-document.getElementById("authSubmit").onclick = async () => {
-  const email = document.getElementById("authEmail").value.trim();
-  const password = document.getElementById("authPassword").value;
-  const errEl = document.getElementById("authError");
-  errEl.style.display = "none";
-  try{
-    if(authMode === "signin"){
-      await auth.signInWithEmailAndPassword(email, password);
-    } else {
-      const name = document.getElementById("authName").value.trim();
-      const cred = await auth.createUserWithEmailAndPassword(email, password);
-      await cred.user.updateProfile({ displayName: name });
-      await db.collection("sakshi_users").doc(cred.user.uid).set({
-        name, email, isEvaluator: false, createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-    }
-  } catch(e){
-    errEl.textContent = e.message;
-    errEl.style.display = "block";
-  }
-};
-
-document.getElementById("signOutBtn").onclick = () => auth.signOut();
-
-auth.onAuthStateChanged(user => {
-  currentUser = user;
-  document.getElementById("signOutBtn").style.display = user ? "inline-block" : "none";
-  document.getElementById("fabNew").style.display = user ? "flex" : "none";
-  if(user){
-    show("screen-list");
-    setListTab("mine");
-  } else {
-    if (mineUnsub) mineUnsub();
-    if (courtyardUnsub) courtyardUnsub();
-    show("screen-auth");
-  }
+document.getElementById('enterRoomBtn').addEventListener('click', ()=>{
+  const n = roomInput.value.trim();
+  if(!n) return;
+  goToRoom(n);
 });
 
-// ---- Dispute list (two tabs: My Disputes / Courtyard) ----
-let mineUnsub = null;
-let courtyardUnsub = null;
-let listTab = "mine";
-
-document.getElementById("tabMine").onclick = () => setListTab("mine");
-document.getElementById("tabCourtyard").onclick = () => setListTab("courtyard");
-
-function setListTab(tab){
-  listTab = tab;
-  document.getElementById("tabMine").classList.toggle("active", tab === "mine");
-  document.getElementById("tabCourtyard").classList.toggle("active", tab === "courtyard");
-  document.getElementById("courtyardNote").style.display = tab === "courtyard" ? "block" : "none";
-
-  if(mineUnsub){ mineUnsub(); mineUnsub = null; }
-  if(courtyardUnsub){ courtyardUnsub(); courtyardUnsub = null; }
-
-  if(tab === "mine"){
-    mineUnsub = db.collection("sakshi_disputes")
-      .where("participantIds", "array-contains", currentUser.uid)
-      .orderBy("createdAt", "desc")
-      .onSnapshot(snap => renderDisputeList(snap, {
-        emptyText: "No Settlement Requests yet.<br/>Tap + to begin one, amicably.",
-        hideClosed: false
-      }), err => console.error(err));
-  } else {
-    // Courtyard: every Open dispute, so a newcomer can find a seat —
-    // whether or not they're a participant yet. Everybody reaches here.
-    // Resolved disputes vanish from the Courtyard once closed.
-    courtyardUnsub = db.collection("sakshi_disputes")
-      .where("visibility", "==", "open")
-      .orderBy("createdAt", "desc")
-      .onSnapshot(snap => renderDisputeList(snap, {
-        emptyText: "The courtyard is quiet.<br/>No Open Settlement Requests right now.",
-        hideClosed: true
-      }), err => console.error(err));
-  }
+// support ?room=3 in the link
+const params = new URLSearchParams(window.location.search);
+if(params.get('room')){
+  roomInput.value = params.get('room');
+  waitForAuthThen(()=>goToRoom(params.get('room')));
 }
 
-const CLOSED_STATUSES = ["settlement_agreement_ready", "unresolved_via_this_track"];
-
-function renderDisputeList(snap, opts){
-  const list = document.getElementById("disputeList");
-  const empty = document.getElementById("listEmpty");
-  list.innerHTML = "";
-
-  let docs = snap.docs;
-  if(opts.hideClosed){
-    docs = docs.filter(doc => !CLOSED_STATUSES.includes(doc.data().status));
-  }
-
-  if(docs.length === 0){
-    empty.innerHTML = opts.emptyText;
-    empty.style.display = "block";
-    return;
-  }
-  empty.style.display = "none";
-  docs.forEach(doc => {
-    const d = doc.data();
-    const isMine = (d.participantIds || []).includes(currentUser.uid);
-    const openSlots = (d.slots || []).filter(s => !s.uid).length;
-    const card = document.createElement("div");
-    card.className = "dispute-card";
-    card.innerHTML = `<div class="title">${escapeHtml(d.title)}</div>
-      <div class="meta">${d.status || "open"}
-        <span class="pill">${d.visibility === "open" ? "Open · Sakshi may witness" : "Private"}</span>
-        ${!isMine ? `<span class="pill">${openSlots} seat${openSlots===1?"":"s"} open</span>` : ""}
-      </div>`;
-    card.onclick = () => openRoom(doc.id);
-    list.appendChild(card);
-  });
+function waitForAuthThen(fn){
+  const check = setInterval(()=>{
+    if(uid){ clearInterval(check); fn(); }
+  }, 150);
 }
 
-// ---- New dispute ----
-document.getElementById("fabNew").onclick = () => {
-  show("screen-new");
-  document.getElementById("evaluatorCodeWrap").style.display = "none";
-  document.getElementById("newEvaluatorCode").value = "";
-};
-document.getElementById("newCancel").onclick = () => show("screen-list");
+function roomDocId(n){ return 'room' + String(n).trim(); }
 
-// Triple-tap 🙏 within 2 seconds reveals the Evaluator code field.
-let gestureTaps = [];
-document.getElementById("evaluatorGesture").onclick = () => {
-  const now = Date.now();
-  gestureTaps = gestureTaps.filter(t => now - t < 2000);
-  gestureTaps.push(now);
-  if(gestureTaps.length >= 3){
-    document.getElementById("evaluatorCodeWrap").style.display = "block";
-    document.getElementById("evaluatorGesture").style.opacity = "1";
-    gestureTaps = [];
+async function goToRoom(n){
+  currentRoomId = roomDocId(n);
+  history.replaceState(null,'', '?room=' + encodeURIComponent(n));
+  entryView.style.display = 'none';
+  roomView.style.display = 'block';
+  document.getElementById('roomTitleText').textContent = 'Room ' + n;
+
+  const ref = db.collection('sakshi_rooms').doc(currentRoomId);
+  const snap = await ref.get();
+  if(!snap.exists){
+    await ref.set({
+      seats: Object.fromEntries(SEATS.map(s=>[s.id,null])),
+      status:'active',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      lastActivity: firebase.firestore.FieldValue.serverTimestamp()
+    });
   }
-};
 
-// SHA-256 hash, hex-encoded — used so the plaintext code is never stored.
-async function sha256Hex(text){
-  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
-}
+  currentSeatId = localStorage.getItem('seat_' + currentRoomId) || null;
 
-document.getElementById("newSubmit").onclick = async () => {
-  const title = document.getElementById("newTitle").value.trim();
-  const narrative = document.getElementById("newNarrative").value.trim();
-  const visibility = document.getElementById("newVisibility").value;
-  const evaluatorCode = document.getElementById("newEvaluatorCode").value.trim();
-  const errEl = document.getElementById("newError");
-  if(!title || !narrative){
-    errEl.textContent = "A title and your narrative are both needed to begin.";
-    errEl.style.display = "block";
-    return;
-  }
-  if(!/^\d{6}$/.test(evaluatorCode)){
-    errEl.textContent = "Tap 🙏 three times to set a 6-digit Evaluator code before beginning.";
-    errEl.style.display = "block";
-    return;
-  }
-  errEl.style.display = "none";
-
-  const evaluatorCodeHash = await sha256Hex(evaluatorCode);
-
-  const slots = emptySlotLayout();
-  const partyASlot = slots.find(s => s.id === "party_a");
-  partyASlot.uid = currentUser.uid;
-  partyASlot.name = currentUser.displayName || currentUser.email;
-
-  const docRef = await db.collection("sakshi_disputes").add({
-    title,
-    visibility,
-    status: "awaiting_response",
-    narrativeA: narrative,
-    narrativeB: "",
-    report: "",
-    resolution: { acceptedA: false, acceptedB: false },
-    slots,
-    evaluatorCodeHash,
-    participantIds: [currentUser.uid],
-    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-  });
-
-  document.getElementById("newTitle").value = "";
-  document.getElementById("newNarrative").value = "";
-  document.getElementById("newEvaluatorCode").value = "";
-  document.getElementById("evaluatorCodeWrap").style.display = "none";
-  openRoom(docRef.id);
-};
-
-// ---- Room ----
-let roomUnsub = null;
-
-function openRoom(id){
-  currentDisputeId = id;
-  show("screen-room");
-  if(roomUnsub) roomUnsub();
-  roomUnsub = db.collection("sakshi_disputes").doc(id).onSnapshot(doc => {
+  if(unsubRoom) unsubRoom();
+  unsubRoom = ref.onSnapshot(doc=>{
     if(!doc.exists) return;
     renderRoom(doc.data());
   });
+
+  if(unsubMsgs) unsubMsgs();
+  unsubMsgs = ref.collection('messages').orderBy('ts','asc').onSnapshot(qs=>{
+    renderThread(qs.docs.map(d=>({id:d.id,...d.data()})));
+  });
 }
 
-document.getElementById("roomBack").onclick = () => {
-  if(roomUnsub) roomUnsub();
-  show("screen-list");
-};
+/* ---------- Seats ---------- */
+function renderRoom(data){
+  const pill = document.getElementById('statusPill');
+  pill.textContent = data.status === 'resolved' ? 'Resolved' : 'Active';
+  pill.className = 'status-pill ' + (data.status === 'resolved' ? 'status-resolved' : 'status-active');
+  document.getElementById('roomSub').textContent =
+    currentSeatId ? ('Seated as ' + SEATS.find(s=>s.id===currentSeatId).code) : 'Choose your seat';
 
-let currentDisputeData = null;
-
-function renderRoom(d){
-  currentDisputeData = d;
-  const grid = document.getElementById("slotGrid");
-  grid.innerHTML = "";
-  (d.slots || emptySlotLayout()).forEach(slot => {
-    const el = document.createElement("div");
-    const isMine = slot.uid === currentUser.uid;
-    el.className = "slot" + (slot.uid ? " filled" : "") + (isMine ? " mine" : "");
-    el.title = ROLE_DESCRIPTIONS[slot.role] || "";
-    el.innerHTML = `<div class="role">${ROLE_LABELS[slot.role]}</div><div>${slot.uid ? (slot.name || "—") : "empty"}</div>`;
-    if(!slot.uid){
-      el.onclick = () => claimSlot(slot.id);
-    } else if(isMine){
-      el.onclick = () => leaveSlot(slot.id);
-    }
-    grid.appendChild(el);
+  const grid = document.getElementById('seatGrid');
+  grid.innerHTML = '';
+  SEATS.forEach(seat=>{
+    const owner = data.seats ? data.seats[seat.id] : null;
+    const mine = currentSeatId === seat.id;
+    const taken = !!owner;
+    const div = document.createElement('div');
+    div.className = 'seat' + (mine ? ' mine' : '') + (taken && !mine ? ' taken' : '') + (!seat.canPost ? ' silent' : '');
+    div.innerHTML = `<span class="seat-code">${seat.code}</span><span class="seat-state">${mine ? 'You' : (taken ? 'Taken' : 'Empty')}</span>`;
+    div.addEventListener('click', ()=>handleSeatTap(seat, owner, mine));
+    grid.appendChild(div);
   });
 
-  document.getElementById("roomNarrativeA").textContent = d.narrativeA || "—";
-  document.getElementById("roomNarrativeB").textContent = d.narrativeB || "Awaiting response…";
-  document.getElementById("roomReport").textContent = d.report || "The Evaluator has not yet issued a Recommended Resolution.";
-
-  const acceptRow = document.getElementById("acceptRow");
-  acceptRow.style.display = d.report ? "flex" : "none";
-
-  const downloadBtn = document.getElementById("downloadReportBtn");
-  downloadBtn.style.display = d.report ? "block" : "none";
+  // composer / watch-only visibility
+  const seatObj = currentSeatId ? SEATS.find(s=>s.id===currentSeatId) : null;
+  document.getElementById('composer').style.display = (seatObj && seatObj.canPost) ? 'flex' : 'none';
+  document.getElementById('watchOnly').style.display = (seatObj && !seatObj.canPost) ? 'block' : 'none';
+  document.getElementById('evaluatorTools').style.display = (currentSeatId === 'evaluator') ? 'flex' : 'none';
+  document.getElementById('exportBtn').style.display = (currentSeatId === 'evaluator' && data.status === 'resolved') ? 'inline-block' : 'none';
 }
 
-const CONFIRM_QUESTIONS = {
-  rep_a: "Are you the Party Representative for the Initiating Party?",
-  rep_b: "Are you the Party Representative for the Responding Party?",
-  party_a: "Are you the Initiating Party in this dispute?",
-  party_b: "Are you the Responding Party in this dispute?",
-  sakshi: "Are you a Sakshi here? " + ROLE_DESCRIPTIONS.sakshi
-};
+async function handleSeatTap(seat, owner, mine){
+  if(mine) return; // already seated here
+  if(owner) return; // taken by someone else
+  const ref = db.collection('sakshi_rooms').doc(currentRoomId);
+  await ref.update({
+    ['seats.'+seat.id]: uid,
+    lastActivity: firebase.firestore.FieldValue.serverTimestamp()
+  });
+  currentSeatId = seat.id;
+  localStorage.setItem('seat_' + currentRoomId, seat.id);
+}
 
-async function claimSlot(slotId){
-  const ref = db.collection("sakshi_disputes").doc(currentDisputeId);
-  const doc = await ref.get();
-  const d = doc.data();
-  const slot = (d.slots || []).find(s => s.id === slotId);
-  if(!slot) return;
-
-  if(slot.role === "evaluator"){
-    const code = window.prompt("Enter the 6-digit Evaluator code you were given, out of the app:");
-    if(code === null) return;
-    if(!/^\d{6}$/.test(code.trim())){
-      alert("That's not a 6-digit code.");
-      return;
-    }
-    const attemptHash = await sha256Hex(code.trim());
-    if(attemptHash !== d.evaluatorCodeHash){
-      alert("That code doesn't match. Ask whoever created this dispute for the correct one.");
-      return;
-    }
-    const slots = d.slots.map(s => s.id === slotId
-      ? { ...s, uid: currentUser.uid, name: currentUser.displayName || currentUser.email }
-      : s);
-    const participantIds = Array.from(new Set([...(d.participantIds||[]), currentUser.uid]));
-    await ref.update({ slots, participantIds });
+/* ---------- Thread ---------- */
+function renderThread(msgs){
+  const thread = document.getElementById('thread');
+  if(msgs.length === 0){
+    thread.innerHTML = '<div class="empty-thread">No matter yet.</div>';
     return;
   }
-
-  const question = CONFIRM_QUESTIONS[slot.role] || "Take this seat?";
-  const confirmed = window.confirm(question + "\n\nOnly confirm if this is genuinely your seat.");
-  if(!confirmed) return;
-
-  const slots = d.slots.map(s => s.id === slotId
-    ? { ...s, uid: currentUser.uid, name: currentUser.displayName || currentUser.email }
-    : s);
-  const participantIds = Array.from(new Set([...(d.participantIds||[]), currentUser.uid]));
-  await ref.update({ slots, participantIds });
-}
-
-async function leaveSlot(slotId){
-  const confirmed = window.confirm("Leave this seat? It will become empty and you can choose a different one.");
-  if(!confirmed) return;
-
-  const ref = db.collection("sakshi_disputes").doc(currentDisputeId);
-  const doc = await ref.get();
-  const d = doc.data();
-  const slots = d.slots.map(s => s.id === slotId
-    ? { ...s, uid: null, name: null }
-    : s);
-  // Only drop them from participantIds if they hold no other seat in this room.
-  const stillHoldsASeat = slots.some(s => s.uid === currentUser.uid);
-  const participantIds = stillHoldsASeat
-    ? d.participantIds
-    : (d.participantIds || []).filter(uid => uid !== currentUser.uid);
-
-  await ref.update({ slots, participantIds });
-}
-
-document.getElementById("acceptBtn").onclick = () => resolveDispute(true);
-document.getElementById("declineBtn").onclick = () => resolveDispute(false);
-
-async function resolveDispute(accepted){
-  const ref = db.collection("sakshi_disputes").doc(currentDisputeId);
-  const doc = await ref.get();
-  const d = doc.data();
-  const slots = d.slots || [];
-  const isPartyA = slots.some(s => s.id === "party_a" && s.uid === currentUser.uid);
-  const isPartyB = slots.some(s => s.id === "party_b" && s.uid === currentUser.uid);
-  const resolution = d.resolution || {};
-  if(isPartyA) resolution.acceptedA = accepted;
-  if(isPartyB) resolution.acceptedB = accepted;
-
-  let status = d.status;
-  if(resolution.acceptedA && resolution.acceptedB) status = "settlement_agreement_ready";
-  else if(accepted === false) status = "unresolved_via_this_track";
-
-  await ref.update({ resolution, status });
-}
-
-function escapeHtml(str){
-  const div = document.createElement("div");
-  div.textContent = str;
-  return div.innerHTML;
-}
-
-document.getElementById("downloadReportBtn").onclick = () => {
-  if (currentDisputeData) downloadEvaluationReportPDF(currentDisputeData);
-};
-
-function partyName(slots, slotId){
-  const s = (slots || []).find(x => x.id === slotId);
-  return (s && s.name) ? s.name : "—";
-}
-
-function downloadEvaluationReportPDF(d){
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ unit: "pt", format: "letter" });
-  const NAVY = [11, 27, 58];
-  const GOLD = [156, 122, 46];
-  const marginX = 56;
-  let y = 64;
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const maxWidth = pageWidth - marginX * 2;
-
-  function heading(text, size, color, gap){
-    doc.setFont("times", "bold");
-    doc.setFontSize(size);
-    doc.setTextColor(...color);
-    doc.text(text, marginX, y);
-    y += gap;
-  }
-  function label(text){
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9);
-    doc.setTextColor(...GOLD);
-    doc.text(text.toUpperCase(), marginX, y);
-    y += 14;
-  }
-  function paragraph(text){
-    doc.setFont("times", "normal");
-    doc.setFontSize(11);
-    doc.setTextColor(20, 20, 20);
-    const lines = doc.splitTextToSize(text || "—", maxWidth);
-    lines.forEach(line => {
-      if (y > 740) { doc.addPage(); y = 64; }
-      doc.text(line, marginX, y);
-      y += 15;
-    });
-    y += 10;
-  }
-  function rule(){
-    doc.setDrawColor(...GOLD);
-    doc.setLineWidth(0.6);
-    doc.line(marginX, y, pageWidth - marginX, y);
-    y += 20;
-  }
-
-  heading("Mission Unity", 20, NAVY, 20);
-  doc.setFont("times", "italic");
-  doc.setFontSize(10);
-  doc.setTextColor(...GOLD);
-  doc.text("From duality to oneness", marginX, y);
-  y += 26;
-  rule();
-
-  heading("Evaluation Report", 15, NAVY, 22);
-
-  label("Settlement Request");
-  paragraph(d.title || "—");
-
-  label("Initiating Party");
-  paragraph(partyName(d.slots, "party_a"));
-
-  label("Responding Party");
-  paragraph(partyName(d.slots, "party_b"));
-
-  label("Evaluator");
-  paragraph(partyName(d.slots, "evaluator"));
-
-  rule();
-
-  label("Initiating Party's Narrative");
-  paragraph(d.narrativeA);
-
-  label("Responding Party's Narrative");
-  paragraph(d.narrativeB);
-
-  rule();
-
-  label("Recommended Resolution");
-  paragraph(d.report);
-
-  rule();
-
-  doc.setFont("helvetica", "italic");
-  doc.setFontSize(8.5);
-  doc.setTextColor(100, 100, 100);
-  const disclaimer = "This Evaluation Report is advisory guidance only. It is issued outside any judicial process, carries no legal authority on its own, and does not constitute legal advice. It becomes binding on the parties only if both the Initiating Party and the Responding Party voluntarily accept it, at which point it forms the basis of a separate Settlement Agreement between them. Enforceability of any resulting agreement depends on the parties' own jurisdiction.";
-  const discLines = doc.splitTextToSize(disclaimer, maxWidth);
-  discLines.forEach(line => {
-    if (y > 740) { doc.addPage(); y = 64; }
-    doc.text(line, marginX, y);
-    y += 11;
+  thread.innerHTML = '';
+  msgs.forEach(m=>{
+    const div = document.createElement('div');
+    const self = m.seat === currentSeatId;
+    div.className = 'msg' + (self ? ' self' : '') + (m.resolution ? ' resolution' : '');
+    const label = SEATS.find(s=>s.id===m.seat)?.code || m.seat;
+    div.innerHTML = `<div class="msg-meta">${m.resolution ? 'Resolution — ' : ''}${label}</div><div class="msg-body"></div>`;
+    div.querySelector('.msg-body').textContent = m.text;
+    thread.appendChild(div);
   });
-
-  y += 20;
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-  doc.setTextColor(140, 140, 140);
-  doc.text("Generated " + new Date().toLocaleString(), marginX, y);
-
-  const safeTitle = (d.title || "settlement-request").toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 40);
-  doc.save(`mission-unity-evaluation-report-${safeTitle}.pdf`);
+  thread.scrollTop = thread.scrollHeight;
 }
 
-// ---- Service worker ----
-if("serviceWorker" in navigator){
-  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js"));
+document.getElementById('sendBtn').addEventListener('click', sendMessage);
+document.getElementById('msgInput').addEventListener('keydown', e=>{
+  if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); }
+});
+
+async function sendMessage(){
+  const input = document.getElementById('msgInput');
+  const text = input.value.trim();
+  if(!text || !currentSeatId) return;
+  const ref = db.collection('sakshi_rooms').doc(currentRoomId);
+  await ref.collection('messages').add({
+    seat: currentSeatId, text, ts: firebase.firestore.FieldValue.serverTimestamp(), resolution:false
+  });
+  await ref.update({lastActivity: firebase.firestore.FieldValue.serverTimestamp()});
+  input.value = '';
+}
+
+/* ---------- Evaluator: resolution + export ---------- */
+document.getElementById('resolveBtn').addEventListener('click', async ()=>{
+  const text = prompt('Write the resolution. This will be posted and the room marked resolved.');
+  if(!text) return;
+  const ref = db.collection('sakshi_rooms').doc(currentRoomId);
+  await ref.collection('messages').add({
+    seat:'evaluator', text, ts: firebase.firestore.FieldValue.serverTimestamp(), resolution:true
+  });
+  await ref.update({status:'resolved', lastActivity: firebase.firestore.FieldValue.serverTimestamp()});
+});
+
+document.getElementById('exportBtn').addEventListener('click', async ()=>{
+  const ref = db.collection('sakshi_rooms').doc(currentRoomId);
+  const msgs = await ref.collection('messages').orderBy('ts','asc').get();
+  const printTitle = document.getElementById('printTitle');
+  const printBody = document.getElementById('printBody');
+  printTitle.textContent = document.getElementById('roomTitleText').textContent + ' — Record';
+  printBody.innerHTML = '';
+  msgs.forEach(d=>{
+    const m = d.data();
+    const p = document.createElement('p');
+    const label = SEATS.find(s=>s.id===m.seat)?.code || m.seat;
+    p.textContent = (m.resolution ? 'RESOLUTION — ' : '') + label + ': ' + m.text;
+    printBody.appendChild(p);
+  });
+  window.print();
+});
+
+document.getElementById('leaveRoomBtn').addEventListener('click', ()=>{
+  if(unsubRoom) unsubRoom();
+  if(unsubMsgs) unsubMsgs();
+  roomView.style.display = 'none';
+  entryView.style.display = 'block';
+  history.replaceState(null,'', window.location.pathname);
+});
+
+/* ---------- Admin: folded-hands x3, clear a room, with confirm ---------- */
+let tapTimes = [];
+document.getElementById('brandMark').addEventListener('click', ()=>{
+  const now = Date.now();
+  tapTimes.push(now);
+  tapTimes = tapTimes.filter(t=>now - t < 1200);
+  if(tapTimes.length >= 3){
+    tapTimes = [];
+    openAdmin();
+  }
+});
+
+const adminOverlay = document.getElementById('adminOverlay');
+const adminRoomInput = document.getElementById('adminRoomInput');
+const adminRoomStatus = document.getElementById('adminRoomStatus');
+const adminConfirmBox = document.getElementById('adminConfirmBox');
+
+function openAdmin(){
+  adminConfirmBox.style.display = 'none';
+  adminRoomInput.value = currentRoomId ? currentRoomId.replace('room','') : '';
+  adminOverlay.style.display = 'flex';
+  refreshAdminRoomStatus();
+}
+document.getElementById('adminCloseBtn').addEventListener('click', ()=>adminOverlay.style.display='none');
+adminRoomInput.addEventListener('input', refreshAdminRoomStatus);
+
+async function refreshAdminRoomStatus(){
+  const n = adminRoomInput.value.trim();
+  if(!n){ adminRoomStatus.textContent = '—'; return; }
+  const snap = await db.collection('sakshi_rooms').doc(roomDocId(n)).get();
+  if(!snap.exists){ adminRoomStatus.textContent = 'Room ' + n + ': not created yet.'; return; }
+  const data = snap.data();
+  const last = data.lastActivity ? data.lastActivity.toDate().toLocaleString() : 'unknown';
+  adminRoomStatus.textContent = 'Room ' + n + ' — ' + data.status + ' — last activity ' + last;
+}
+
+document.getElementById('adminClearBtn').addEventListener('click', ()=>{
+  const n = adminRoomInput.value.trim();
+  if(!n) return;
+  adminConfirmBox.style.display = 'block';
+  adminConfirmBox.innerHTML = `Do you really want to clear the chat/matter of Room ${n}? This removes every seat and every message. This cannot be undone.
+    <div class="row">
+      <button class="btn-danger" id="confirmYes">Yes, clear it</button>
+      <button class="btn-ghost" id="confirmNo">No, keep it</button>
+    </div>`;
+  document.getElementById('confirmNo').addEventListener('click', ()=>{ adminConfirmBox.style.display='none'; });
+  document.getElementById('confirmYes').addEventListener('click', ()=>clearRoom(n));
+});
+
+async function clearRoom(n){
+  const id = roomDocId(n);
+  const ref = db.collection('sakshi_rooms').doc(id);
+  const msgs = await ref.collection('messages').get();
+  const batch = db.batch();
+  msgs.forEach(d=>batch.delete(d.ref));
+  batch.set(ref, {
+    seats: Object.fromEntries(SEATS.map(s=>[s.id,null])),
+    status:'active',
+    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    lastActivity: firebase.firestore.FieldValue.serverTimestamp()
+  });
+  await batch.commit();
+  if(currentRoomId === id){
+    localStorage.removeItem('seat_' + id);
+    currentSeatId = null;
+  }
+  adminConfirmBox.style.display = 'none';
+  refreshAdminRoomStatus();
+  alert('Room ' + n + ' is cleared and free for a new matter.');
 }
 </script>
 </body>

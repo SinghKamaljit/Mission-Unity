@@ -1,16 +1,13 @@
 {
-  "name": "Mission Unity — Amicable Settlement",
-  "short_name": "Mission Unity",
-  "description": "From duality to oneness. Duality breeds dispute; let unity be attained amicably.",
+  "name": "Mission Unity",
+  "short_name": "Unity",
+  "description": "From duality to oneness",
   "start_url": "./index.html",
-  "scope": "./",
   "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#0B1B3A",
-  "theme_color": "#0B1B3A",
+  "background_color": "#EDE7D9",
+  "theme_color": "#20264A",
   "icons": [
     { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "icons/icon-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
   ]
 }
