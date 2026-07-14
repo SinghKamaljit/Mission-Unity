@@ -274,6 +274,15 @@ const SEATS = [
   {id:'s5', code:'S5', canPost:false},
 ];
 
+// Room 13: "Tera" — the general discussion room. Ten open speaking seats,
+// no evaluator, no resolution, no export. Each seat asks for a name/nickname
+// once, on claiming — shown alongside the seat code in the thread only,
+// never shrunk to fit the small seat tile.
+const TERA_SEATS = Array.from({length:10}, (_,i)=>({id:'t'+(i+1), code:'T'+(i+1), canPost:true}));
+
+function seatSetFor(roomId){ return roomId === 'room13' ? TERA_SEATS : SEATS; }
+function isTeraRoom(roomId){ return roomId === 'room13'; }
+
 firebase.initializeApp(FIREBASE_CONFIG);
 const auth = firebase.auth();
 const db = firebase.firestore();
@@ -281,6 +290,7 @@ const db = firebase.firestore();
 let uid = null;
 let currentRoomId = null;
 let currentSeatId = null;
+let currentRoomData = null;
 let unsubRoom = null;
 let unsubMsgs = null;
 
@@ -332,7 +342,8 @@ async function goToRoom(n){
   const snap = await ref.get();
   if(!snap.exists){
     await ref.set({
-      seats: Object.fromEntries(SEATS.map(s=>[s.id,null])),
+      seats: Object.fromEntries(seatSetFor(currentRoomId).map(s=>[s.id,null])),
+      names: Object.fromEntries(seatSetFor(currentRoomId).map(s=>[s.id,null])),
       status:'active',
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       lastActivity: firebase.firestore.FieldValue.serverTimestamp()
@@ -344,7 +355,8 @@ async function goToRoom(n){
   if(unsubRoom) unsubRoom();
   unsubRoom = ref.onSnapshot(doc=>{
     if(!doc.exists) return;
-    renderRoom(doc.data());
+    currentRoomData = doc.data();
+    renderRoom(currentRoomData);
   });
 
   if(unsubMsgs) unsubMsgs();
@@ -355,15 +367,16 @@ async function goToRoom(n){
 
 /* ---------- Seats ---------- */
 function renderRoom(data){
+  const seats = seatSetFor(currentRoomId);
   const pill = document.getElementById('statusPill');
   pill.textContent = data.status === 'resolved' ? 'Resolved' : 'Active';
   pill.className = 'status-pill ' + (data.status === 'resolved' ? 'status-resolved' : 'status-active');
   document.getElementById('roomSub').textContent =
-    currentSeatId ? ('Seated as ' + SEATS.find(s=>s.id===currentSeatId).code) : 'Choose your seat';
+    currentSeatId ? ('Seated as ' + seats.find(s=>s.id===currentSeatId).code) : 'Choose your seat';
 
   const grid = document.getElementById('seatGrid');
   grid.innerHTML = '';
-  SEATS.forEach(seat=>{
+  seats.forEach(seat=>{
     const owner = data.seats ? data.seats[seat.id] : null;
     const mine = currentSeatId === seat.id;
     const taken = !!owner;
@@ -375,7 +388,7 @@ function renderRoom(data){
   });
 
   // composer / watch-only visibility
-  const seatObj = currentSeatId ? SEATS.find(s=>s.id===currentSeatId) : null;
+  const seatObj = currentSeatId ? seats.find(s=>s.id===currentSeatId) : null;
   document.getElementById('composer').style.display = (seatObj && seatObj.canPost) ? 'flex' : 'none';
   document.getElementById('watchOnly').style.display = (seatObj && !seatObj.canPost) ? 'block' : 'none';
   document.getElementById('evaluatorTools').style.display = (currentSeatId === 'evaluator') ? 'flex' : 'none';
@@ -387,6 +400,7 @@ async function releaseCurrentSeat(){
   const ref = db.collection('sakshi_rooms').doc(currentRoomId);
   await ref.update({
     ['seats.'+currentSeatId]: null,
+    ['names.'+currentSeatId]: null,
     lastActivity: firebase.firestore.FieldValue.serverTimestamp()
   });
   localStorage.removeItem('seat_' + currentRoomId);
@@ -400,9 +414,18 @@ async function handleSeatTap(seat, owner, mine){
     return;
   }
   if(owner) return; // taken by someone else
+
+  let name = null;
+  if(isTeraRoom(currentRoomId)){
+    name = prompt('What should we call you here? (name or nickname — any length is fine)');
+    if(name === null) return; // cancelled, don't claim the seat
+    name = name.trim();
+  }
+
   const ref = db.collection('sakshi_rooms').doc(currentRoomId);
   await ref.update({
     ['seats.'+seat.id]: uid,
+    ['names.'+seat.id]: name || null,
     lastActivity: firebase.firestore.FieldValue.serverTimestamp()
   });
   currentSeatId = seat.id;
@@ -411,6 +434,7 @@ async function handleSeatTap(seat, owner, mine){
 
 /* ---------- Thread ---------- */
 function renderThread(msgs){
+  const seats = seatSetFor(currentRoomId);
   const thread = document.getElementById('thread');
   if(msgs.length === 0){
     thread.innerHTML = '<div class="empty-thread">No matter yet.</div>';
@@ -421,8 +445,10 @@ function renderThread(msgs){
     const div = document.createElement('div');
     const self = m.seat === currentSeatId;
     div.className = 'msg' + (self ? ' self' : '') + (m.resolution ? ' resolution' : '');
-    const label = SEATS.find(s=>s.id===m.seat)?.code || m.seat;
-    div.innerHTML = `<div class="msg-meta">${m.resolution ? 'Resolution — ' : ''}${label}</div><div class="msg-body"></div>`;
+    const code = seats.find(s=>s.id===m.seat)?.code || m.seat;
+    const label = m.name ? (code + ' — ' + m.name) : code;
+    div.innerHTML = '<div class="msg-meta"></div><div class="msg-body"></div>';
+    div.querySelector('.msg-meta').textContent = (m.resolution ? 'Resolution — ' : '') + label;
     div.querySelector('.msg-body').textContent = m.text;
     thread.appendChild(div);
   });
@@ -439,8 +465,9 @@ async function sendMessage(){
   const text = input.value.trim();
   if(!text || !currentSeatId) return;
   const ref = db.collection('sakshi_rooms').doc(currentRoomId);
+  const name = currentRoomData?.names?.[currentSeatId] || null;
   await ref.collection('messages').add({
-    seat: currentSeatId, text, ts: firebase.firestore.FieldValue.serverTimestamp(), resolution:false
+    seat: currentSeatId, text, name, ts: firebase.firestore.FieldValue.serverTimestamp(), resolution:false
   });
   await ref.update({lastActivity: firebase.firestore.FieldValue.serverTimestamp()});
   input.value = '';
@@ -472,10 +499,12 @@ document.getElementById('exportBtn').addEventListener('click', async ()=>{
   const title = document.getElementById('roomTitleText').textContent + ' — Record';
 
   const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const seats = seatSetFor(currentRoomId);
   let rows = '';
   msgs.forEach(d=>{
     const m = d.data();
-    const label = SEATS.find(s=>s.id===m.seat)?.code || m.seat;
+    const code = seats.find(s=>s.id===m.seat)?.code || m.seat;
+    const label = m.name ? (code + ' — ' + m.name) : code;
     const prefix = m.resolution ? 'RESOLUTION — ' : '';
     rows += `<p class="${m.resolution ? 'resolution' : ''}"><strong>${esc(prefix + label)}:</strong> ${esc(m.text)}</p>`;
   });
@@ -561,8 +590,10 @@ async function clearRoom(n){
   const msgs = await ref.collection('messages').get();
   const batch = db.batch();
   msgs.forEach(d=>batch.delete(d.ref));
+  const seats = seatSetFor(id);
   batch.set(ref, {
-    seats: Object.fromEntries(SEATS.map(s=>[s.id,null])),
+    seats: Object.fromEntries(seats.map(s=>[s.id,null])),
+    names: Object.fromEntries(seats.map(s=>[s.id,null])),
     status:'active',
     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     lastActivity: firebase.firestore.FieldValue.serverTimestamp()
