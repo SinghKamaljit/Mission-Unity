@@ -392,8 +392,23 @@ function renderRoom(data){
   document.getElementById('exportBtn').style.display = (currentSeatId === 'evaluator' && data.status === 'resolved') ? 'inline-block' : 'none';
 }
 
+async function releaseCurrentSeat(){
+  if(!currentSeatId || !currentRoomId) return;
+  const ref = db.collection('sakshi_rooms').doc(currentRoomId);
+  await ref.update({
+    ['seats.'+currentSeatId]: null,
+    lastActivity: firebase.firestore.FieldValue.serverTimestamp()
+  });
+  localStorage.removeItem('seat_' + currentRoomId);
+  currentSeatId = null;
+}
+
 async function handleSeatTap(seat, owner, mine){
-  if(mine) return; // already seated here
+  if(mine){
+    if(!confirm('Leave this seat and free it? You can then tap the correct one.')) return;
+    await releaseCurrentSeat();
+    return;
+  }
   if(owner) return; // taken by someone else
   const ref = db.collection('sakshi_rooms').doc(currentRoomId);
   await ref.update({
@@ -469,7 +484,8 @@ document.getElementById('exportBtn').addEventListener('click', async ()=>{
   window.print();
 });
 
-document.getElementById('leaveRoomBtn').addEventListener('click', ()=>{
+document.getElementById('leaveRoomBtn').addEventListener('click', async ()=>{
+  await releaseCurrentSeat();
   if(unsubRoom) unsubRoom();
   if(unsubMsgs) unsubMsgs();
   roomView.style.display = 'none';
